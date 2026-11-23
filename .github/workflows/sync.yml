@@ -1,0 +1,33 @@
+name: sync
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: 上傳到 Notion（不勾＝只讀試跑）
+        type: boolean
+        default: false
+      force:
+        description: 數據不變也重新上傳
+        type: boolean
+        default: false
+  schedule:
+    - cron: "0 2 * 5-6 1"
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q requests beautifulsoup4 openpyxl
+      - run: python main.py
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          UPLOAD: ${{ github.event_name == 'schedule' || inputs.upload }}
+          FORCE: ${{ inputs.force }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: excel
+          path: "*.xlsx"
